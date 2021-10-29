@@ -6,15 +6,19 @@ The intention is to be able run on more than one type of STM32 MCU.
 
 
 A compiler will be needed. Its possible that all you need to do is to install gcc-arm-none-eabi like this:
-  sudo apt install gcc-arm-none-eabi
+
+sudo apt install gcc-arm-none-eabi
 
 
 This program avoid RTOS and HAL but use the header files from HAL (those are good).
 
 To Compile do cd to desired device folder with a Makefile then just:
+
 make
 
+
 NOTE if changing device/MCU do a make clean between since files may get mixed up, so:
+
 make clean
 
 
