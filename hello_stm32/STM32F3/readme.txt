@@ -89,7 +89,7 @@ There we see that STM32F303K8 is simply called STM32F303x8 in the code.
 If you have another device than STM32F303x8 you will need to adjust the Makefile (see comments in Makefile on how to do that).
 
 Did not find the needed "startup_stm32f303x8.s" in the repository from STMicroelectronics. 
-Did however find then in this older repository:
+Did however find that in this older repository:
 https://github.com/PaxInstruments/STM32CubeF3.git
 It have the additional folder:
 	CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/linker/

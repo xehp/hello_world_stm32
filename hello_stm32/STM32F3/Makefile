@@ -1,11 +1,27 @@
 # Makefile
 #
 # This makefile is for STM32F3 series.
-# The orriginal divice this was written for was STM32F303K8T6.
+# The original device this was written for was STM32F303K8T6.
 # To use another STM32F3 MCU find out its name in the macro files and 
 # replace all stm32f303x8 with that other device. 
 # See the readme file for information on how to figure out the macro name.
 # 
+# https://github.com/xehp/hello_world_stm32
+#
+# Copyright (C) 2021 Alexander & Henrik Bjorkman www.eit.se/hb.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+# OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
 
 
 
