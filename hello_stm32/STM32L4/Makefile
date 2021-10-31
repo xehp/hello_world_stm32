@@ -2,10 +2,21 @@
 #
 # This makefile is for STM32L4 series.
 #
-# Use this if less output is wanted during compiling.
-#ifndef V
-#	Q := @
-#endif
+# https://github.com/xehp/hello_world_stm32
+#
+# Copyright (C) 2021 Alexander & Henrik Bjorkman www.eit.se/hb.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+# OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
 
@@ -24,7 +35,7 @@ HEADER_FILES = $(wildcard ../src/*.h)
 SOURCE_FILES = $(wildcard ../src/*.c)
 OBJ_FILES = $(SOURCE_FILES:.c=.o)
 
-# Regarding names like stm32l432xx, stm32l151xB, stm32f303x8 or similar below, see comment for "which macro to use" further down.
+# Regarding names like stm32l432xx, stm32l151xB, stm32f303x8 or similar below, see readme file on how to find these names.
 OBJ_FILES += startup_stm32l432xx.o
 OBJ_FILES += system_stm32l4xx.o
 OBJ_FILES += ../libc/libc_init.o
