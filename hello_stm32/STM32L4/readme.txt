@@ -32,20 +32,20 @@ Nucleo STM32L432K8T6
 
 
 
-To compile for this device (in addition to the ones we already do) we need:
+To compile for this device (in addition to our own files) we needed:
 1) HAL Driver header files.
-2) CMSIS device include
+2) CMSIS device files
 
-Clone this repository:
-https://github.com/STMicroelectronics/STM32CubeF3.git
-We do not need all files from there. These are needed:
-	Drivers/STM32CubeF3/STM32F3xx_HAL_Driver/Inc/ 
-	Drivers/CMSIS/Device/ST/STM32F3xx/Include/
-	Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/system_stm32f3xx.c
-	Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/
+We cloned this repository:
+https://github.com/STMicroelectronics/STM32CubeL4.git
+And copied over these files and folders:
+	Drivers/STM32CubeL4/STM32L4xx_HAL_Driver/Inc/ 
+	Drivers/CMSIS/Device/ST/STM32L4xx/Include/
+	Drivers/CMSIS/Device/ST/STM32L4xx/Source/Templates/system_stm32l4xx.c
+	Drivers/CMSIS/Device/ST/STM32L4xx/Source/Templates/gcc/
 
 
-Now we need to know what STM32L432K8T6 is called in the HAL header files.
+Next we need to know what STM32L432K8T6 is called in the HAL header files.
 It will be something like STM32L432x4/6/8/B/C/E, we need to know exactly which it is.
 So looking in "CMSIS/Device/ST/STM32L4xx/Include/stm32l4xx.h" we see this:
 
@@ -80,8 +80,8 @@ NOTE If you have another device than STM32L432xx you will need to adjust the Mak
 (see comments in Makefile on how to do that).
 
 Did not find the needed "STM32L432xx_flash.ld" in the repository from STMicroelectronics. 
-Found one over at MBED so used one from there. So if you have another device than
-STM32L432xx you will need to find another flash load script create one by modifying
+Found one over at MBED so used one from there. If you have another device than
+STM32L432xx you will need to find another flash load script or create one by modifying
 the "STM32L432xx_flash.ld" we have.
 
 Install the compiler (if not installed already), like this:
@@ -98,14 +98,6 @@ Copy the file "binary.bin" file over to that drive (into the root of the drive).
 After some seconds (5 or so) the the green LED next to reset button on the Nucleo should start flashing.
 
 If not press the reset button (it is opposite to the USB connector) and wait another 5 - 10 seconds.
-
-
-
-
-
-
-
-
 
 
 
