@@ -1,14 +1,49 @@
-/* Entry Point */
+/* 
+GCC linker script
+
+If you need to modify this file for another device it can be usefull to read more here:
+http://www.stf12.org/developers/freerots_ec-linker_script.html
+This file needs to match the hardware and the startup module, in this case "startup_stm32l431xx.s".
+*/
+
+/* 
+Entry Point
+
+This tells the linker what the first line of code is called in the startup module
+(typically some assember code, in our example its in file "startup_stm32l431xx.s").
+This section shall not need to be edited (unless you play with the startup module).
+*/
 ENTRY(Reset_Handler)
 
-/* Highest address of the user mode stack */
-_estack = 0x2000C000;    /* end of RAM */
+/*
+Highest address of the user mode stack 
 
-/* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x4000;      /* required amount of heap  */
-_Min_Stack_Size = 0x800; /* required amount of stack */
+This shall have the value of RAM begin plus RAM length.
+So for STM32 the value here shall be RAM start plus the amount of (normal) RAM.
+The STOM32L432 has 48K normal RAM (it has an additional 16K of ECC RAM).
+Only change the value here, the name "_estack" must remain same as used in the 
+startup module.
+*/
+_estack = 0x2000C000; /* This need to match the actuall device */
 
-/* Specify the memory areas */
+/* 
+Generate a link error if heap and stack don't fit into RAM
+Typically these two does not require editing.
+*/
+_Min_Heap_Size = 0x400;  /* required amount of heap  */
+_Min_Stack_Size = 0x400; /* required amount of stack */
+
+/*
+Specify the memory areas
+
+The length of repective memory is different between different devices.
+To find these values look up the "Datasheet". 
+For STOM32L432 its called "DS11453" or "stm32l431kc.pdf".
+For some reason the ECC RAM is not adjasent to non ECC ram.
+If your device have no ECC RAM then probably set RAM2 length to zero.
+Or for fun experiment swap RAM1 and RAM2 to see if you can run
+your program using the ECC memory.
+*/
 MEMORY
 {
 RAM1 (xrw)      : ORIGIN = 0x20000000, LENGTH = 48K
@@ -16,7 +51,16 @@ RAM2 (xrw)      : ORIGIN = 0x10000000, LENGTH = 16K
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 256K
 }
 
-/* Define output sections */
+/* 
+Define output sections
+
+This section shall not need to be edited (unless you play with the startup module).
+Hopefully the below code can be used same for all different types of STM32L4 devices.
+
+If you find another link file you might need to comment out the file names
+listed in section "Remove information from the standard libraries". We needed to
+do that.
+*/
 SECTIONS
 {
   /* The startup code goes first into FLASH */

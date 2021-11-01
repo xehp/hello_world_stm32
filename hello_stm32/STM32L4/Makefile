@@ -36,7 +36,7 @@ SOURCE_FILES = $(wildcard ../src/*.c)
 OBJ_FILES = $(SOURCE_FILES:.c=.o)
 
 # Regarding names like stm32l432xx, stm32l151xB, stm32f303x8 or similar below, see readme file on how to find these names.
-OBJ_FILES += startup_stm32l432xx.o
+OBJ_FILES += CMSIS/Device/ST/STM32L4xx/Source/Templates/gcc/startup_stm32l432xx.o
 OBJ_FILES += system_stm32l4xx.o
 OBJ_FILES += ../libc/libc_init.o
 OBJ_FILES += ../libc/libc_maths.o
@@ -52,8 +52,7 @@ CFLAGS += -DSTM32L432xx=t
 CFLAGS += -mfpu=fpv4-sp-d16 -mfloat-abi=soft -mcpu=cortex-m4 -DHAL_FLASH_MODULE_ENABLED
 ASFLAGS += -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=soft
 LDFLAGS += -L../CMSIS/Lib/GCC -l:libarm_cortexM4l_math.a
-LDSCRIPT ?= STM32L432xx_flash.ld
-
+LDSCRIPT ?= CMSIS/Device/ST/STM32L4xx/Source/Templates/gcc/linker/STM32L432xx_flash.ld
 
 CFLAGS += -Werror -Wall -Wno-pointer-sign
 

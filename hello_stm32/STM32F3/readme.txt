@@ -4,6 +4,8 @@ Hello STM32F3 readme.txt
 
 
 This folder contains files needed to compile our "Hello World" program for the STM32F3 series.
+Or rather instead of having all files here we explain where to get them and where to put them.
+Becuse that is more future prof and you will all learn more that way.
 
 
 Files and folders of interest:
@@ -51,25 +53,24 @@ Supplier Device Package: 32-LQFP (7x7)
 Base Product Number: STM32F303
 
 
-
-
-To compile for this device (in addition to the ones we already do) we need:
+To compile for this device (in addition to the ones we already have) we need:
 1) HAL Driver header files.
 2) CMSIS device include
 
 Clone this repository:
 https://github.com/STMicroelectronics/STM32CubeF3.git
-We do not need all files from there. These are needed:
-	Drivers/STM32CubeF3/STM32F3xx_HAL_Driver/Inc/ 
-	Drivers/CMSIS/Device/ST/STM32F3xx/Include/
+An easy way is to simply copy the folder "Drivers" from there to here.
+Although we do not need all files from there. These files are needed:
+	Drivers/STM32CubeF3/STM32F3xx_HAL_Driver/Inc/*
+	Drivers/CMSIS/Device/ST/STM32F3xx/Include/*
 	Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/system_stm32f3xx.c
-	Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/
+	Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/*
+Compare with respective folder for STM32L4 if its not clear where the files shall go.
 
 
 Now we need to know what STM32F303K8T6 is called in the HAL header files.
 It will be something like STM32F303x4/6/8 or STM32F303xB/C/E but we need to know which is is.
 So looking in "STM32F3/CMSIS/Device/ST/STM32F3xx/Include/stm32f3xx.h" we see this:
-
 	/* #define STM32F301x8 */   /*!< STM32F301K6, STM32F301K8, STM32F301C6, STM32F301C8, STM32F301R6 and STM32F301R8 Devices */
 	/* #define STM32F302x8 */   /*!< STM32F302K6, STM32F302K8, STM32F302C6, STM32F302C8, STM32F302R6 and STM32F302R8 Devices */
 	/* #define STM32F302xC */   /*!< STM32F302CB, STM32F302CC, STM32F302RB, STM32F302RC, STM32F302VB and STM32F302VC Devices */
@@ -84,9 +85,11 @@ So looking in "STM32F3/CMSIS/Device/ST/STM32F3xx/Include/stm32f3xx.h" we see thi
 	/* #define STM32F358xx */   /*!< STM32F358CC, STM32F358RC, STM32F358VC: STM32F303xC with regulator off: STM32F358xx Devices */
 	/* #define STM32F378xx */   /*!< STM32F378CC, STM32F378RC, STM32F378VC: STM32F373xC with regulator off: STM32F378xx Devices */
 	/* #define STM32F398xx */   /*!< STM32F398VE: STM32F303xE with regulator off: STM32F398xx Devices */
-
 There we see that STM32F303K8 is simply called STM32F303x8 in the code.
+
+
 If you have another device than STM32F303x8 you will need to adjust the Makefile (see comments in Makefile on how to do that).
+
 
 Did not find the needed "startup_stm32f303x8.s" in the repository from STMicroelectronics. 
 Did however find that in this older repository:
@@ -98,6 +101,7 @@ In those linker files find and comment out these lines:
     libc.a ( * )
     libm.a ( * )
     libgcc.a ( * )
+
 
 Install the compiler (if not installed already), like this:
 	sudo apt install gcc-arm-none-eabi
