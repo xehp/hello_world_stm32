@@ -59,12 +59,12 @@ To compile for this device (in addition to the ones we already have) we need:
 
 Clone this repository:
 https://github.com/STMicroelectronics/STM32CubeF3.git
-An easy way is to simply copy the folder "Drivers" from there to here.
-Although we do not need all files from there. These files are needed:
-	Drivers/STM32CubeF3/STM32F3xx_HAL_Driver/Inc/*
-	Drivers/CMSIS/Device/ST/STM32F3xx/Include/*
-	Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/system_stm32f3xx.c
-	Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/*
+The easy way is to simply copy everything in the folder "Drivers" from there to here.
+Although we do not need all files from there. These files/folders are needed:
+        STM32F3xx_HAL_Driver/Inc 
+	CMSIS/Device/ST/STM32F3xx/Include
+	CMSIS/Device/ST/STM32F3xx/Source/Templates/system_stm32f3xx.c
+	CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc
 Compare with respective folder for STM32L4 if its not clear where the files shall go.
 
 
