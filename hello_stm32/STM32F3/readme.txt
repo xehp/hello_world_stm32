@@ -5,13 +5,12 @@ Hello STM32F3 readme.txt
 
 This folder contains files needed to compile our "Hello World" program for the STM32F3 series.
 Or rather instead of having all files here we explain where to get them and where to put them.
-Becuse that is more future prof and you will all learn more that way.
+Because that is more future prof and its more instructive.
 
 
-Files and folders of interest:
-CMSIS				Common Microcontroller Software Interface Standard
-doc				Some downloaded manuals.
-STM32F3xx_HAL_Driver		Code created by STMicroelectronics
+Files and folders of interest (some need to be created/copied):
+Drivers				Common Microcontroller Software Interface Standard and HAL macro files.
+doc				Some downloaded manuals (optional).
 binary.bin			The file to put onto the device (need to be built)
 Makefile			The file telling compiler which files to build.
 readme.txt			This file.
@@ -59,13 +58,13 @@ To compile for this device (in addition to the ones we already have) we need:
 
 Clone this repository:
 https://github.com/STMicroelectronics/STM32CubeF3.git
-The easy way is to simply copy everything in the folder "Drivers" from there to here.
+The easy way is to simply copy the folder "Drivers" from there to here.
 Although we do not need all files from there. These files/folders are needed:
         STM32F3xx_HAL_Driver/Inc 
 	CMSIS/Device/ST/STM32F3xx/Include
 	CMSIS/Device/ST/STM32F3xx/Source/Templates/system_stm32f3xx.c
 	CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc
-Compare with respective folder for STM32L4 if its not clear where the files shall go.
+If the desired structure is unclear compare with respective folder for STM32L4 (for illustration we have copy all needed files for STM32L4 already).
 
 
 Now we need to know what STM32F303K8T6 is called in the HAL header files.
@@ -95,8 +94,8 @@ Did not find the needed "startup_stm32f303x8.s" in the repository from STMicroel
 Did however find that in this older repository:
 https://github.com/PaxInstruments/STM32CubeF3.git
 It have the additional folder:
-	CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/linker/
-So used linker (.ld) and startup assembler (.s) files from that repository instead for now.
+	STM32F3/CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/linker/
+So copy that folder into similar position here.
 In those linker files find and comment out these lines:
     libc.a ( * )
     libm.a ( * )
@@ -109,6 +108,11 @@ Install the compiler (if not installed already), like this:
 
 Compile the code by issuing command:
 	make
+
+
+If you get "No rule to make target" or "cannot open linker script file" then check instructions above again,
+probably files and folders did not go into the folders exactly as needed.
+If the error is about "libc.a" then be sure to comment those lines out in the linker file.
 
 
 A "binary.bin" file should be created (among other files).

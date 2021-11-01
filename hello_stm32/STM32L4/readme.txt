@@ -7,9 +7,8 @@ This folder contains files needed to compile our "Hello World" program for the S
 
 
 Files and folders of interest
-	CMSIS				Common Microcontroller Software Interface Standard (CMSIS) https://developer.arm.com/tools-and-software/embedded/cmsis
+	Drivers				Common Microcontroller Software Interface Standard (CMSIS) and HAL driver Header files
 	doc				Some downloaded manuals from STMicroelectronics
-	STM32L4xx_HAL_Driver		HAL driver Header files created by STMicroelectronics
 	binary.bin			The file to put onto the device (need to be built/compiled first)
 	Makefile			The file telling compiler which files to build and how.
 	readme.txt			This file.
@@ -104,4 +103,9 @@ After some seconds (5 or so) the the green LED next to reset button on the Nucle
 
 If not press the reset button (it is opposite to the USB connector) and wait another 5 - 10 seconds.
 
+
+More reading
+
+About CMSIS here: https://developer.arm.com/tools-and-software/embedded/cmsis
+GCC linker script: http://www.stf12.org/developers/freerots_ec-linker_script.html
 

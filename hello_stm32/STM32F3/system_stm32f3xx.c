@@ -139,7 +139,7 @@ void SystemInit(void)
 	{
 		uint32_t tmpRCC_CFGR = RCC->CFGR;
 
-		// TODO Since PLLSRC is set to HSI/2 selected as PLL input clock
+		// Since PLLSRC is set to HSI/2 selected as PLL input clock
 		// and ref [1] chapter 9.2 "Clocks" say "HSI 8 MHZ RC oscillator clock"
 		// So using x 9 we should get 36 Mhz and x 16 shall give 64 MHz
 		// 0111: PLL input clock x 9

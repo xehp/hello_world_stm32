@@ -40,8 +40,7 @@ HEADER_FILES = $(wildcard ../src/*.h)
 SOURCE_FILES = $(wildcard ../src/*.c)
 OBJ_FILES = $(SOURCE_FILES:.c=.o)
 
-OBJ_FILES += CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/startup_stm32f303x8.o
-#OBJ_FILES += CMSIS/Device/ST/STM32F3xx/Source/Templates/system_stm32f3xx.o
+OBJ_FILES += Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/startup_stm32f303x8.o
 OBJ_FILES += system_stm32f3xx.o
 OBJ_FILES += ../libc/libc_init.o
 OBJ_FILES += ../libc/libc_maths.o
@@ -49,7 +48,7 @@ OBJ_FILES += ../libc/libc_maths_impl.o
 
 
 
-INCPATH = -ISTM32F3xx_HAL_Driver/Inc -ICMSIS/Device/ST/STM32F3xx/Include/ -I../CMSIS/Core/Include/ -I../libc -I../src
+INCPATH = -IDrivers/STM32F3xx_HAL_Driver/Inc -IDrivers/CMSIS/Device/ST/STM32F3xx/Include/ -I../CMSIS/Core/Include/ -I../libc -I../src
 
 
 # the "t" below  does not seem to matter, use anything (or just let it be t).
@@ -64,7 +63,7 @@ LDFLAGS += -L../CMSIS/Lib/GCC -l:libarm_cortexM4lf_math.a
 # Very unsure about which libgcc.a to use (there are many)
 LDFLAGS += -L/usr/lib/arm-none-eabi/lib -L/usr/lib/gcc/arm-none-eabi/9.2.1
 
-LDSCRIPT ?= CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/linker/STM32F303X8_FLASH.ld
+LDSCRIPT ?= Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/linker/STM32F303X8_FLASH.ld
 
 CFLAGS += -Werror -Wall -Wno-pointer-sign
 
