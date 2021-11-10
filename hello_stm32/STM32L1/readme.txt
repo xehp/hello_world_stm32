@@ -64,9 +64,9 @@ Copy the build binary.bin file over to root in "STM32L151C8".
 
 When it works the green LED next to reset button on the Nucleo should start flashing after a while.
 
-
-
-
+If not, NOTE that in our testing on STM32L1 we did not use a Nucleo, instead it was a proprietary board,
+see doc/schematics.pdf. The debug LED was on pin PC13 (not PB3 as typical for Nucleos). 
+This will then need to be changed in file cfg.h
 
 
 
@@ -81,7 +81,6 @@ https://github.com/stlink-org/stlink/commit/6471a60460a4659134cf80d8864a022dc09b
 st-flash --connect-under-reset --format ihex write binary.hex
 
 If it does not to download code work check that the st-link SW is at least 1.7.
-
 
 If device does not boot after flashing check the BOOTx pins.
 
