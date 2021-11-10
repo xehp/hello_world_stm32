@@ -45,9 +45,12 @@ References
 #elif (defined STM32F303x8)
 // Supported values are 8000000U, 36000000U or 64000000U.
 #define SysClockFrequencyHz 64000000U
+#elif (defined STM32L151xB)
+// Supported values are 2097000U or 16000000U
+#define SysClockFrequencyHz 16000000U
 #else
 // See also SystemCoreClock
-#define SysClockFrequencyHz 8000000U
+#error
 #endif
 
 
@@ -59,9 +62,6 @@ References
 #define DEBUG_LED_ACTIVE_HIGH
 #elif (defined STM32L151xB)
 // This is the Cortex M3 Lowpower version L151xx
-// To know which macro to use see "Table 1. Macros for STM32L1 series" in DocID026721 Rev 3
-// We have STM32L151C8T6, but T6 is package so look for STM32L151C8, so macro in stm32l1xx.h
-// shall be: STM32L151xB
 #define DEBUG_LED_PORT GPIOC
 #define DEBUG_LED_PIN 13
 #define DEBUG_LED_ACTIVE_LOW

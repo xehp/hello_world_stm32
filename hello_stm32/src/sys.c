@@ -375,7 +375,7 @@ static void sysPeripheralClockStart()
 	sysBusyWait(10);
 }
 
-#elif (defined STM32F303x8)
+#elif (defined STM32F303x8) || (defined STM32L151xB)
 
 static void sysPeripheralClockStart()
 {
@@ -389,8 +389,8 @@ static void sysPeripheralClockStart()
 	// TODO To save power comment out those ports that are not used.
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN_Msk;
 	RCC->AHBENR |= RCC_AHBENR_GPIOBEN_Msk;
-	//RCC->AHBENR |= RCC_AHBENR_GPIOCEN_Msk;
-	//RCC->AHBENR |= RCC_AHBENR_GPIODEN_Msk;
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN_Msk;
+	RCC->AHBENR |= RCC_AHBENR_GPIODEN_Msk;
 	//RCC->AHBENR |= RCC_AHBENR_GPIOFEN_Msk;
 
 
@@ -407,7 +407,7 @@ static void sysPeripheralClockStart()
 	sysBusyWait(10);
 }
 
-#elif (defined STM32L151xB)
+#else
 #error not implemented yet
 #endif
 
