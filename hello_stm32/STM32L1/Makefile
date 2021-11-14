@@ -62,7 +62,7 @@ LDSCRIPT ?= stm32l151xb_flash.ld
 # ASFLAGS += -mfpu=fpv4-sp-d16
 
 # For small projects this does not matter but its better to do it from start. One day its too late to turn these on.
-CFLAGS += -Werror -Wall -Wno-pointer-sign
+CFLAGS += -Werror -Wall -Wno-pointer-sign -Wno-error=cpp
 
 # Its a small project, if a header file is changed just recompile everything (ignoring HAL file changes, do a make clean if changing there).
 DEPENDENCIES = $(HEADER_FILES) 

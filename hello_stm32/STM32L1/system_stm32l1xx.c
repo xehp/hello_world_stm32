@@ -124,10 +124,12 @@
                is no need to call the 2 first functions listed above, since SystemCoreClock
                variable is updated automatically.
   */
+#if 0
 uint32_t SystemCoreClock    = 32000000;
 const uint8_t PLLMulTable[9]    = {3, 4, 6, 8, 12, 16, 24, 32, 48};
 const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
+#endif
 
 /**
   * @}
@@ -151,6 +153,8 @@ const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
   * @{
   */
 
+
+
 /**
   * @brief  Setup the microcontroller system.
   *         Initialize the Embedded Flash Interface, the PLL and update the 
@@ -160,50 +164,14 @@ const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
   */
 void SystemInit (void)
 {
-#if SysClockFrequencyHz == 16000000U
-	// Use HSI, 16 MHz, no PLL
-
-	// RM0038 Rev 16, 3.9.1 Access control register (FLASH_ACR)
-	// 1: one wait state
-	// Increasing latency here might not be needed but will do so for now.
-	FLASH->ACR |= (1 << FLASH_ACR_LATENCY_Pos);
-
-	// [1] 3.3.3 Read access latency step 2. Check that the new number of wait states is taken into account to access the Flash memory by reading the FLASH_ACR register.
-	// For now just busy wait
-	sysBusyWait(10000);
-
-	// Initialize/Enable the HSI clock and wait until HSI stable
-	RCC->CR |= RCC_CR_HSION_Msk;
-	/*while (!(RCC->CR & RCC_CR_HSIRDY_Msk))
-	{
-		sysBusyWait(1);
-	}*/
-	sysBusyWait(10000);
-
-
-	/* Set HSI as SYSCLCK source */
-	// RM0038 Rev 16, 6.3.3 Clock configuration register (RCC_CFGR)
-	// 01: HSI oscillator used as system clock
-	const uint32_t wantedClock = 1;
-	uint32_t tmpRCC_CFGR = RCC->CFGR & ~(RCC_CFGR_SW_Msk);
-	RCC->CFGR = tmpRCC_CFGR | (wantedClock << RCC_CFGR_SW_Pos);
-
-	// Wait for system clock to be on.
-	//while (((RCC->CFGR & (3 << RCC_CFGR_SWS_Pos)) != (wantedClock << RCC_CFGR_SW_Pos) ) {};
-	sysBusyWait(10000);
-
-	// TODO Turn off MSI to save a little power.
-	// RCC->CR &= ~RCC_CR_MSION_Msk;
-
-
-#elif SysClockFrequencyHz == 2097000U
+#if SysClockFrequencyHz == 2097000U
 
   /*!< Set MSION bit (perhaps not needed, it should already be on) */
   RCC->CR |= (uint32_t)RCC_CR_MSION_Msk;
 
   /*!< Reset SW[1:0], HPRE[3:0], PPRE1[2:0], PPRE2[2:0], MCOSEL[2:0] and MCOPRE[2:0] bits */
   //RCC->CFGR &= (uint32_t)0x88FFC00C;
-  
+
   /*!< Reset HSION, HSEON, CSSON and PLLON bits */
   //RCC->CR &= (uint32_t)0xEEFEFFFE;
 
@@ -212,6 +180,284 @@ void SystemInit (void)
 
   /*!< Reset PLLSRC, PLLMUL[3:0] and PLLDIV[1:0] bits */
   //RCC->CFGR &= (uint32_t)0xFF02FFFF;
+
+#elif (SysClockFrequencyHz == 16000000U)
+
+	// Changing latency is probably wrong here because must use also FLASH_ACR_ACC64
+	// Set one wait state latency for flash read.
+	// RM0038 Rev 16, 3.9.1 Access control register (FLASH_ACR)
+	// 1: one wait state
+	//FLASH->ACR |= (1 << FLASH_ACR_LATENCY_Pos);
+	// [1] 3.3.3 Read access latency step 2. Check that the new number of wait states is taken into account to access the Flash memory by reading the FLASH_ACR register.
+	// For now just busy wait
+	//sysBusyWait(10000);
+
+
+	#if (SysClockExternalHz == 8000000)
+
+		// Setup PLL so we can have 16 MHz using external crystal at 8 MHz
+
+
+		// Initialize/Enable the HSI clock and wait until HSI stable
+		//RCC->CR |= RCC_CR_HSION_Msk;
+		/*while (!(RCC->CR & RCC_CR_HSIRDY_Msk))
+		{
+			sysBusyWait(1);
+		}*/
+		//sysBusyWait(10000);
+
+
+		// First turn PLL off and other clocks on.
+		RCC->CR |= RCC_CR_HSEON_Msk | RCC_CR_HSION_Msk | RCC_CR_MSION_Msk;
+		RCC->CR &= ~RCC_CR_PLLON_Msk;
+
+		/*
+		Below code sets PLL to:
+			use HSI (16MHz) as input.
+			Multiply by 4
+			Divide by 2.
+		So result shall be the wanted 32 MHz (if all this works)
+
+		Bits 23:22 PLLDIV[1:0]: PLL output division
+			01: PLL clock output = PLLVCO / 2
+		Bits 21:18 PLLMUL[3:0]: PLL multiplication factor
+			0001: PLLVCO = PLL clock entry x 4
+		Bit 16 PLLSRC: PLL entry clock source
+			This bit is set and cleared by software to select PLL clock source. This bit can be written
+			only when PLL is disabled.
+			0: HSI oscillator clock selected as PLL input clock
+			1: HSE oscillator clock selected as PLL input clock
+			Note: The PLL minimum input clock frequency is 2 MHz.
+		*/
+		//RCC->CFGR |= (1 << RCC_CFGR_PLLDIV_Pos) | RCC_CFGR_PLLMUL4 | RCC_CFGR_PLLSRC_HSE;
+		RCC->CFGR |= (1 << RCC_CFGR_PLLDIV_Pos) | (1 << RCC_CFGR_PLLMUL_Pos) | (1<<RCC_CFGR_PLLSRC_Pos);
+
+		// Turn PLL on
+		RCC->CR |= RCC_CR_PLLON;
+
+		// TODO Wait for PLL to be stable, for now just busy wait.
+		sysBusyWait(10000);
+
+
+		// Set system clock source to PLL.
+		// 11: PLL used as system clock
+		uint32_t tmpRCC_CFGR = RCC->CFGR;
+		const uint32_t wantedClock = 3; // RCC_CFGR_SW_PLL
+		tmpRCC_CFGR &= ~(RCC_CFGR_SW_Msk);
+		tmpRCC_CFGR |= (wantedClock << RCC_CFGR_SW_Pos);
+		RCC->CFGR = tmpRCC_CFGR;
+
+		// Wait for system clock to be on.
+		//while (((RCC->CFGR & (3 << RCC_CFGR_SWS_Pos)) != (wantedClock << RCC_CFGR_SW_Pos) ) {};
+		sysBusyWait(10000);
+
+	#else
+		// Use HSI, 16 MHz, no PLL
+
+		// Initialize/Enable the HSI clock and wait until HSI stable
+		RCC->CR |= RCC_CR_HSION_Msk;
+		while (!(RCC->CR & RCC_CR_HSIRDY_Msk))
+		{
+			sysBusyWait(10);
+		}
+
+
+		/* Set HSI as SYSCLCK source */
+		// RM0038 Rev 16, 6.3.3 Clock configuration register (RCC_CFGR)
+		// 01: HSI oscillator used as system clock
+		const uint32_t wantedClock = 1;
+		uint32_t tmpRCC_CFGR = RCC->CFGR & ~(RCC_CFGR_SW_Msk);
+		RCC->CFGR = tmpRCC_CFGR | (wantedClock << RCC_CFGR_SW_Pos);
+
+		// Wait for system clock to be on.
+		//while (((RCC->CFGR & (3 << RCC_CFGR_SWS_Pos)) != (wantedClock << RCC_CFGR_SW_Pos) ) {};
+		sysBusyWait(10000);
+
+	#endif
+
+	// TODO Turn off MSI to save a little power.
+	// RCC->CR &= ~RCC_CR_MSION_Msk;
+
+#elif (SysClockFrequencyHz == 24000000U) || (SysClockFrequencyHz == 32000000U)
+  	uint32_t tmp = 0;
+
+	// Setup PLL so we can have 24 or 32 MHz
+    // [RM0038 Rev 16] 6.2.4 PLL
+
+	// [RM0038 Rev 16] 5.1.5 "Dynamic voltage scaling management" perhaps.
+	// Table 26. Performance versus V CORE ranges
+  	// To use USB device the product must be in range 1.
+	/*while (PWR->CSR & PWR_CSR_VOSF_Msk) {sysBusyWait(10);}
+	tmp = PWR->CR & (~PWR_CR_VOS_Msk);
+	PWR->CR = tmp | (2 << PWR_CR_VOS_Pos);
+	while (PWR->CSR & PWR_CSR_VOSF_Msk) {sysBusyWait(10);}*/
+
+	while (PWR->CSR & PWR_CSR_VOSF_Msk) {sysBusyWait(10);}
+	tmp = PWR->CR & (~PWR_CR_VOS_Msk);
+	PWR->CR = tmp | (1 << PWR_CR_VOS_Pos);
+	while (PWR->CSR & PWR_CSR_VOSF_Msk) {sysBusyWait(10);}
+
+	// Bit 28 PWRRST: Power interface reset
+	while (PWR->CSR & PWR_CSR_VOSF_Msk) {sysBusyWait(10);}
+	RCC->APB1RSTR |= RCC_APB1RSTR_PWRRST_Msk;
+	while (PWR->CSR & PWR_CSR_VOSF_Msk) {sysBusyWait(10);}
+
+
+	// 1: 64-bit access
+	FLASH->ACR |= (1 << FLASH_ACR_ACC64_Pos);
+	while ((FLASH->ACR & (1 << FLASH_ACR_ACC64_Pos)) == 0) {sysBusyWait(10);}
+	sysBusyWait(1000);
+
+	// Check that 64-bit access is taken into account by reading FLASH_ACR
+
+
+	// Bit 1 PRFTEN: Prefetch enable
+	//FLASH->ACR |= (1 << FLASH_ACR_PRFTEN_Pos);
+	//sysBusyWait(1000);
+
+    // Set one wait state latency for flash read.
+	// RM0038 Rev 16, 3.9.1 Access control register (FLASH_ACR)
+	// 1: one wait state
+	// [1] 3.3.3 Read access latency step 2. Check that the new number of wait states is taken into account to access the Flash memory by reading the FLASH_ACR register.
+	// For now just busy wait
+	FLASH->ACR |= (1 << FLASH_ACR_LATENCY_Pos);
+	while ((FLASH->ACR & (1 << FLASH_ACR_LATENCY_Pos)) == 0) {sysBusyWait(10);}
+	sysBusyWait(1000);
+
+
+
+
+
+	/*
+	Below code sets PLL to:
+		use HSI (16MHz) as input.
+		Multiply by 4
+		Divide by 2.
+	So result shall be the wanted 32 MHz (if all this works)
+
+	Bits 23:22 PLLDIV[1:0]: PLL output division
+	 	00: not allowed
+		01: PLL clock output = PLLVCO / 2
+		10: PLL clock output = PLLVCO / 3
+		11: PLL clock output = PLLVCO / 4
+	Bits 21:18 PLLMUL[3:0]: PLL multiplication factor
+		0000: PLLVCO = PLL clock entry x 3
+		0001: PLLVCO = PLL clock entry x 4
+		0010: PLLVCO = PLL clock entry x 6
+		0011: PLLVCO = PLL clock entry x 8
+		0100: PLLVCO = PLL clock entry x 12
+		0101: PLLVCO = PLL clock entry x 16
+		0110: PLLVCO = PLL clock entry x 24
+		0111: PLLVCO = PLL clock entry x 32
+		1000: PLLVCO = PLL clock entry x 48
+	Bit 16 PLLSRC: PLL entry clock source
+		This bit is set and cleared by software to select PLL clock source. This bit can be written
+		only when PLL is disabled.
+		0: HSI oscillator clock selected as PLL input clock
+		1: HSE oscillator clock selected as PLL input clock
+		Note: The PLL minimum input clock frequency is 2 MHz.
+	*/
+	#if SysClockExternalHz == 8000000U
+		// Using HSE
+
+		// First turn PLL off and other clocks on.
+		RCC->CR |= RCC_CR_HSEON_Msk | RCC_CR_MSION_Msk;
+		RCC->CR &= ~RCC_CR_PLLON_Msk;
+		while (RCC->CR & RCC_CR_PLLRDY_Msk) {sysBusyWait(10);}
+		sysBusyWait(1000);
+
+
+		#if SysClockFrequencyHz == 24000000U
+
+			// This may enough to run USB device
+			RCC->CFGR |= (3 << RCC_CFGR_PLLDIV_Pos) | (4 << RCC_CFGR_PLLMUL_Pos) | (1<<RCC_CFGR_PLLSRC_Pos);
+
+		#elif SysClockFrequencyHz == 32000000U
+			// This line gives only 6 MHz but at least it runs. So baudrate is 21600 instead of 115200
+			//RCC->CFGR |= (3 << RCC_CFGR_PLLDIV_Pos) | (0 << RCC_CFGR_PLLMUL_Pos) | (1<<RCC_CFGR_PLLSRC_Pos);
+
+			// This line gives only 8 MHz but at least it runs. So baudrate is 28800 instead of 115200
+			//RCC->CFGR |= (2 << RCC_CFGR_PLLDIV_Pos) | (0 << RCC_CFGR_PLLMUL_Pos) | (1<<RCC_CFGR_PLLSRC_Pos);
+
+			// This line gives only 16 MHz but at least it runs, baudrate 57600
+			//RCC->CFGR |= (1 << RCC_CFGR_PLLDIV_Pos) | (1 << RCC_CFGR_PLLMUL_Pos) | (1<<RCC_CFGR_PLLSRC_Pos);
+
+			// This give 24 MHz, so baudrate is 86400.
+			//RCC->CFGR |= (1 << RCC_CFGR_PLLDIV_Pos) | (2 << RCC_CFGR_PLLMUL_Pos) | (1<<RCC_CFGR_PLLSRC_Pos);
+
+			// This should give the wanted 32 MHz but it does not run.
+			//RCC->CFGR |= (1 << RCC_CFGR_PLLDIV_Pos) | (3 << RCC_CFGR_PLLMUL_Pos) | (1<<RCC_CFGR_PLLSRC_Pos);
+
+			// This line gives only 16 MHz but at least it runs.
+			//RCC->CFGR |= (3 << RCC_CFGR_PLLDIV_Pos) | (3 << RCC_CFGR_PLLMUL_Pos) | (1<<RCC_CFGR_PLLSRC_Pos);
+
+			// This should also give 48 MHz but it does not run.
+			//RCC->CFGR |= (1 << RCC_CFGR_PLLDIV_Pos) | (4 << RCC_CFGR_PLLMUL_Pos) | (1<<RCC_CFGR_PLLSRC_Pos);
+
+			// Finally this is what we need to run USB device. This is what we want. But this did not work.
+			RCC->CFGR |= (2 << RCC_CFGR_PLLDIV_Pos) | (4 << RCC_CFGR_PLLMUL_Pos) | (1<<RCC_CFGR_PLLSRC_Pos);
+
+			#warning // Failed to get 32 MHz working with external crystal
+
+		#else
+		#error
+		#endif
+
+	#else
+		// Using HSI
+
+		// Initialize/Enable the HSI clock and wait until HSI stable
+		RCC->CR |= RCC_CR_HSION_Msk;
+		while (!(RCC->CR & RCC_CR_HSIRDY_Msk)) {sysBusyWait(10);}
+		sysBusyWait(1000);
+
+		#if SysClockFrequencyHz == 24000000U
+			// This may enough to run USB device
+			RCC->CFGR |= (3 << RCC_CFGR_PLLDIV_Pos) | ( 2 << RCC_CFGR_PLLMUL_Pos);
+		#elif SysClockFrequencyHz == 32000000U
+			// This configuration works but sometimes it need more than one try to get it running at power on?
+			// This is what we need to run USB device. PLLVCO must be running at 96 MHz.
+			RCC->CFGR |= (2 << RCC_CFGR_PLLDIV_Pos) | ( 2 << RCC_CFGR_PLLMUL_Pos);
+		#else
+		#error
+		#endif
+
+
+	#endif
+
+	sysBusyWait(1000);
+
+
+	// Turn PLL on
+	RCC->CR |= RCC_CR_PLLON;
+	//while (!(RCC->CR & RCC_CR_PLLRDY_Msk)) {sysBusyWait(10);}
+	while (RCC->CR & RCC_CR_PLLRDY_Msk) {sysBusyWait(10);}
+	sysBusyWait(1000);
+
+
+	// Set system clock source to PLL.
+	// 11: PLL used as system clock
+	uint32_t tmpRCC_CFGR = RCC->CFGR;
+	const uint32_t wantedClock = 3; // RCC_CFGR_SW_PLL
+	tmpRCC_CFGR &= ~(RCC_CFGR_SW_Msk);
+	tmpRCC_CFGR |= (wantedClock << RCC_CFGR_SW_Pos);
+	RCC->CFGR = tmpRCC_CFGR;
+
+	// Wait for system clock to be on.
+	//while (((RCC->CFGR & (3 << RCC_CFGR_SWS_Pos)) != (wantedClock << RCC_CFGR_SW_Pos) ) {};
+	sysBusyWait(100000);
+
+	// Bit 28 PWRRST: Power interface reset
+	/*while (PWR->CSR & PWR_CSR_VOSF_Msk) {sysBusyWait(10);}
+	RCC->APB1RSTR |= RCC_APB1RSTR_PWRRST_Msk;
+	while (PWR->CSR & PWR_CSR_VOSF_Msk) {sysBusyWait(10);}*/
+
+	sysBusyWait(100000);
+
+	// TODO Disable unused clocks.
+	//RCC->CR &= ~(RCC_CR_MSION_Msk | RCC_CR_HSEON_Msk);
+
+
 #else
 #error
 #endif
@@ -238,8 +484,8 @@ void SystemInit (void)
   SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH. */
 #endif
 #endif
-
 }
+
 
 
 #if 0
