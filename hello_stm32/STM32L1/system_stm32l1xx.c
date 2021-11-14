@@ -281,6 +281,16 @@ void SystemInit (void)
 #elif (SysClockFrequencyHz == 24000000U) || (SysClockFrequencyHz == 32000000U)
   	uint32_t tmp = 0;
 
+  	/*
+    TODO Not allowed to change clock more than a factor 4?
+  	[DocID17659 Rev 12] Table 3
+  	The CPU frequency changes from initial to final must respect "F CPU initial < 4*F CPU final" to limit V CORE
+  	drop due to current consumption peak when frequency increases. It must also respect 5 μs delay between
+  	two changes. For example to switch from 4.2 MHz to 32 MHz, you can switch from 4.2 MHz to 16 MHz,
+  	wait 5 μs, then switch from 16 MHz to 32 MHz.""
+  	*/
+
+
 	// Setup PLL so we can have 24 or 32 MHz
     // [RM0038 Rev 16] 6.2.4 PLL
 
