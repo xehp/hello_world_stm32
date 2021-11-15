@@ -46,13 +46,20 @@ References
 // Supported values are 8000000U, 36000000U or 64000000U.
 #define SysClockFrequencyHz 64000000U
 #elif (defined STM32L151xB)
-// Supported values are 2097000U or 16000000U
-#define SysClockFrequencyHz 16000000U
+// Supported values are 2097000U, 16000000U, 24000000U or 32000000U
+#define SysClockFrequencyHz 32000000U
 #else
-// See also SystemCoreClock
 #error
 #endif
 
+
+// If we want to use external crystal (HSE) then define this macro.
+// Perhaps rename this to HSE_VALUE?
+// NOTE some of our implementations of system_stm32****.c will ignore this macro.
+// That is setting this will enable external source if code support it, or else its ignored.
+// Set this to 0 if external crystal is not available.
+// Currently 0U or 8000000U are possible values to use here.
+#define SysClockExternalHz 0U
 
 // Which GPIO pin to use for system/debug LED
 #if (defined STM32L432xx)
