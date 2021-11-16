@@ -816,7 +816,7 @@ static int initUsart123(int usartNr, uint32_t baud)
 	 https://community.st.com/thread/46664-setting-the-baudrate-for-usart-in-stm32f103rb
 	 Ref [1] chapter 36.5.4 USART baud rate generation
 	 */
-	uint32_t divider = SysClockFrequencyHz / baud;
+	uint32_t divider = (SysClockFrequencyHz + (baud/2)) / baud;
 	/*if (divider<0x300)
 	 {
 	 return -1;

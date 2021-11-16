@@ -54,7 +54,7 @@ ASFLAGS += -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=soft
 LDFLAGS += -L../CMSIS/Lib/GCC -l:libarm_cortexM4l_math.a
 LDSCRIPT ?= Drivers/CMSIS/Device/ST/STM32L4xx/Source/Templates/gcc/linker/STM32L432xx_flash.ld
 
-CFLAGS += -Werror -Wall -Wno-pointer-sign
+CFLAGS += -Werror -Wall -Wno-pointer-sign -Wno-error=cpp
 
 
 # Its a small project, if a header file is changed just recompile everything (ignoring HAL file changes, do a make clean if changing there).

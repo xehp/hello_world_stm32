@@ -40,8 +40,8 @@ References
 // Wanted system clock frequency
 #if (defined STM32L432xx)
 // Depending on clock configuration in SystemInit
-// The following can be used 4000000U, 16000000U or 80000000U.
-#define SysClockFrequencyHz 80000000U
+// The following can be used 4000000U, 16000000U, 64000000U or 80000000U.
+#define SysClockFrequencyHz 64000000U
 #elif (defined STM32F303x8)
 // Supported values are 8000000U, 36000000U or 64000000U.
 #define SysClockFrequencyHz 64000000U
