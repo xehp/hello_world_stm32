@@ -261,8 +261,8 @@ void SystemInit(void)
 			//tmpRCC_PLLCFGR |= wantedPLLQ << RCC_PLLCFGR_PLLQ_Pos;
 
 			// Setting this or not should not matter for now since we have not set PLLPEN
-			const uint32_t wantedPLLP = 1;
-			tmpRCC_PLLCFGR |= wantedPLLP << RCC_PLLCFGR_PLLP_Pos;
+			//const uint32_t wantedPLLP = 1;
+			//tmpRCC_PLLCFGR |= wantedPLLP << RCC_PLLCFGR_PLLP_Pos;
 
 
 			RCC->PLLCFGR = tmpRCC_PLLCFGR;
@@ -338,12 +338,14 @@ void SystemInit(void)
 
 		#if (SysClockExternalHz == 8000000U)
 
-		// I have not gotten it to work with the external (HSE) clock.
 		#warning // When testing this code we got only 4 MHz, it seems MSI is still used although PLL/HSE is wanted.
+		// TODO I have not gotten it to work with the external (HSE) clock.
 		// Perhaps this explains what to do:
 		// https://community.st.com/s/question/0D53W000000Yln1/is-there-external-oscillator-in-the-nucleol432kc-board-the-website-says-it-is-there-but-i-am-not-able-to-enable-hse-mode
-        // Solder Bridge, basically a link option using solder instead of a push on pin arrangement.
-        // Use SB17 as a search term in the User Manual / Schematic so you get the details / description.​
+		// Solder Bridge, basically a link option using solder instead of a push on pin arrangement.
+		// Use SB17 as a search term in the User Manual / Schematic so you get the details / description.​
+		// So on other HW this might work fine, if so perhaps do not use RCC_CR_HSEBYP_Msk below.
+		// RCC->CR |= RCC_CR_HSEBYP_Msk
 
 		// Setup PLL so we can have 32 MHz
 
@@ -359,7 +361,7 @@ void SystemInit(void)
 		  passed with external clock
 		*/
 		sysBusyWait(100000);
-		RCC->CR |= RCC_CR_HSEON_Msk | RCC_CR_HSEBYP_Msk;
+		RCC->CR |= RCC_CR_HSEON_Msk /*| RCC_CR_HSEBYP_Msk*/;
 		// When tested this gave eternal loop, so HSE is never ready?
 		// If this is commented out then it does not switch to HSE/PLL, it stays on HSI.
 		// So what more is required to use HSE?
@@ -488,17 +490,17 @@ void SystemInit(void)
 		#if SysClockExternalHz == 8000000U
 
 		#warning // When testing this it seems MSI is still used although HSE is wanted.
-
 		// Perhaps this explains what to do:
 		// https://community.st.com/s/question/0D53W000000Yln1/is-there-external-oscillator-in-the-nucleol432kc-board-the-website-says-it-is-there-but-i-am-not-able-to-enable-hse-mode
-        // Solder Bridge, basically a link option using solder instead of a push on pin arrangement.
-        // Use SB17 as a search term in the User Manual / Schematic so you get the details / description.​
-
+		// Solder Bridge, basically a link option using solder instead of a push on pin arrangement.
+		// Use SB17 as a search term in the User Manual / Schematic so you get the details / description.​
+		// So on other HW this might work fine, if so perhaps do not use RCC_CR_HSEBYP_Msk below.
+		// RCC->CR |= RCC_CR_HSEBYP_Msk
 
 		// Initialize the HSE clock and wait for it to start.
-		// TODO When I tested it never got ready. So eternal loop here.
-		RCC->CR |= RCC_CR_HSEON;
-		//while ((RCC->CR & RCC_CR_HSERDY_Msk) == 0) {sysBusyWait(10);}
+		// When I tested it never got ready. So eternal loop here, see comments above.
+		RCC->CR |= RCC_CR_HSEON_Msk;
+		while ((RCC->CR & RCC_CR_HSERDY_Msk) == 0) {sysBusyWait(10);}
 		sysBusyWait(10000);
 
 		// 10: HSE selected as system clock

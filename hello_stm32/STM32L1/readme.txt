@@ -80,7 +80,7 @@ https://github.com/stlink-org/stlink/commit/6471a60460a4659134cf80d8864a022dc09b
 
 st-flash --connect-under-reset --format ihex write binary.hex
 
-If it does not to download code work check that the st-link SW is at least 1.7.
+If it does not to download code work check BOOT0 and that the st-link SW is at least 1.7.
 
 If device does not boot after flashing check the BOOTx pins.
 
