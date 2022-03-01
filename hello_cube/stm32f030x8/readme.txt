@@ -20,11 +20,6 @@ Pinout & Configuration
 Enable IWDG
 Set clock prescaler to max (256)
 
-Under NVIC enable USART1 & USART2 interrupt.
-
-
-USART1 & USART2 are used in mode Asynchronous.
-No HW Flow control.
 
 
 Clock configuration
@@ -36,5 +31,16 @@ Enter a name and location
 Set Makefile as Toolchain / IDE
 
 Press "Generate code"
+
+
+Install GCC for arm
+sudo apt install gcc-arm-none-eabi
+
+cd to relevant folder.
+make
+
+
+Install stlink
+st-flash --connect-under-reset --format ihex write build/hello_cube.hex
 
 
