@@ -34,16 +34,20 @@ History
 #include "cfg.h"
 #include "sys.h"
 #include "version.h"
+#include "miscUtilities.h"
 #include "mainSeconds.h"
 #include "serialDev.h"
 
+#if (defined STM32L151xB)
+#include "usb_dev.h"
+#endif
 
 
 
 
-static int64_t mainTimeInTicks=0;
 
-static int32_t mainSecondsTimer_ms=0;
+static int32_t mainTimeInTicks=0;
+
 
 static int32_t mainLoopCounter=0; // This increments about once per 10 uS
 
@@ -58,7 +62,20 @@ int main(void)
 {
 	sysInit();
 
-	sysSleepMs(100);
+	/*for(int i=0;i<3;i++)
+	{
+		sysSleepMs(500);
+		SYS_LED_OFF();
+		sysSleepMs(500);
+		SYS_LED_ON();
+	}*/
+
+	SYS_LED_OFF();
+	sysSleepMs(200);
+
+	// Say "Hello" on the debug LED in Morse code.
+	sysLedFlashCode(SysMorseH);
+
 
 	#if (defined USART1_BAUDRATE)
 	if (serialInit(DEV_USART1, USART1_BAUDRATE)!=0)
@@ -70,6 +87,32 @@ int main(void)
 		serialPrint(DEV_USART1, "USART1\n");
 	}
 	#endif
+
+/*#ifdef STM32F030x8
+	// This was used to test HW output on PA2
+
+	sysPinOutInit(GPIOA, 6);
+	sysPinOutSetHigh(GPIOA, 6);
+	sysSleepMs(500);
+	sysPinOutSetLow(GPIOA, 6);
+	sysSleepMs(500);
+	sysPinOutSetHigh(GPIOA, 6);
+	sysSleepMs(500);
+	sysPinOutSetLow(GPIOA, 6);
+
+	sysPinOutInit(GPIOA, 2);
+	for(int i=0; i<100;i++)
+	{
+		sysPinOutSetLow(GPIOA, 2);
+		sysSleepMs(1);
+		sysPinOutSetHigh(GPIOA, 2);
+		sysSleepMs(1);
+	}
+#endif*/
+
+
+
+	sysLedFlashCode(SysMorseE);
 
 	#if (defined USART2_BAUDRATE)
 	if (serialInit(DEV_USART2, USART2_BAUDRATE)!=0)
@@ -93,8 +136,11 @@ int main(void)
 	}
 	#endif
 
-	sysSleepMs(100);
+	sysLedFlashCode(SysMorseL);
 
+	/*#if (defined STM32L151xB)
+	usb_init();
+	#endif*/
 
 
 	// Print some message, so we know the program is running.
@@ -112,15 +158,20 @@ int main(void)
 	logLine("Copyright 2021 (C) Henrik Bjorkman www.eit.se/hb");
 	logLine("GNU GENERAL PUBLIC LICENSE Version 2");
 
-	serialPrint(DEV_USART1, "RCC->CFGR ");
-	serialPrint(DEV_USART2, "RCC->CFGR ");
-	serialPrintHex16(1, RCC->CFGR);
-	serialPrintHex16(2, RCC->CFGR);
-	logLine("");
+	sysLedFlashCode(SysMorseL);
 
-
-
-	sys_wdt_reset();
+	// Log some clock settings
+	#if 0
+	{
+		char tmp[256]={0};
+		utility_memcpy(tmp, "RCC->CFGR ", sizeof(tmp));
+		misc_lltoa(RCC->CFGR, tmp+utility_strlen(tmp), 16);
+		utility_memcpy(tmp+utility_strlen(tmp), " ", sizeof(tmp)-utility_strlen(tmp));
+		misc_lltoa(SysClockFrequencyHz, tmp+utility_strlen(tmp), 10);
+		SYS_ASSERT(utility_strlen(tmp) < sizeof(tmp));
+		logLine(tmp);
+	}
+	#endif
 
 #if (defined __linux__)
 	linux_sim_init();
@@ -128,8 +179,8 @@ int main(void)
 #endif
 
 
+	sysLedFlashCode(SysMorseO);
 
-	sysSleepMs(100);
 
 	sys_wdt_reset();
 
@@ -144,15 +195,24 @@ int main(void)
 
 	logLine("main: Enter main loop");
 
+
 	// Initialize the timer used to know when to do medium tick.
 	mainTimeInTicks=sysGetSysTimeMs();
-	mainSecondsTimer_ms=mainTimeInTicks+1000;
 
 	// main loop
 	for(;;)
 	{
+		if ((serialGetChar(DEV_USART1) != -1) || (serialGetChar(DEV_USART2) != -1))
+		for(int i=0;i<3;i++)
+		{
+			sysSleepMs(900);
+			SYS_LED_ON();
+			sysSleepMs(100);
+			SYS_LED_OFF();
+		}
 
-		const int64_t timerTicks_ms=sysGetSysTimeMs();
+
+		const int32_t timerTicks_ms=sysGetSysTimeMs();
 
 		// In the switch we put things that need to be done medium frequently, this too tries to spread CPU load over time.
 
@@ -165,7 +225,6 @@ int main(void)
 				// Timer has been incremented,
 				// count ticks and start the tickState sequence,
 				// typically this happens once per milli second.
-				//mainTimeInTicks++;
 				mainTimeInTicks = timerTicks_ms;
 				tickState++;
 			}
@@ -178,13 +237,6 @@ int main(void)
 		}
 		case 2:
 		{
-			const int16_t t = timerTicks_ms-mainSecondsTimer_ms;
-			if (t>=0)
-			{
-				// One second has passed since last second tick. Increment seconds timer.
-				secAndLogIncSeconds();
-				mainSecondsTimer_ms += 1000;
-			}
 			tickState++;
 			break;
 		}
@@ -195,7 +247,7 @@ int main(void)
 		}
 		case 4:
 		{
-			secAndLogMediumTick();
+			secAndLogMediumTick(mainTimeInTicks);
 			tickState++;
 			break;
 		}

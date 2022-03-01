@@ -1,0 +1,32 @@
+
+
+st-link can be used to copy code to target via CLI (in long run much faster than mouse clicking).
+  sudo apt install libusb-1.0 cmake
+  cd ~/git/
+  git clone https://github.com/texane/stlink.git
+  cd stlink
+  Read doc/compiling.md and compile it.
+
+Download code to device (something like this, depending on installation of st-link):
+sudo /home/henrik/git/stlink/build/st-flash --format ihex write binary.hex
+sudo /home/henrik/git/stlink/build/Release/st-flash --format ihex write binary.hex
+sudo /home/henrik/git/stlink/build/Debug/bin/st-flash --format ihex write binary.hex
+
+
+
+
+So far only tested with Nucleo which has builtin ST-Link. 
+
+According to RM0038 Rev 16 chapter 2.7 Boot configuration
+
+Embedded boot loader
+The embedded boot loader is used to reprogram the Flash memory through one of the
+following interfaces:
+In Cat.1 and Cat.2 devices: USART1 or USART2.
+In Cat.3, Cat.4, Cat.5 and Cat.6 devices: USART1, USART2 or USB
+This program is located in the system memory and is programmed by ST during production.
+
+So only serial port connection with an STM32 should be needed to put a new program on it.
+
+
+

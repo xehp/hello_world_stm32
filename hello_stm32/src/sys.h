@@ -34,6 +34,12 @@ It will use one IO pin to show status and error.
 #elif (defined STM32F303x8)
 #include "stm32f3xx.h"
 #include "stm32f3xx_hal_cortex.h"
+#elif (defined STM32WB35xx)
+#include "stm32wbxx.h"
+#include "stm32wbxx_hal_cortex.h"
+#elif (defined STM32F030x8)
+#include "stm32f0xx.h"
+#include "stm32f0xx_hal_cortex.h"
 #else
 #error Unknown target CPU/MCU
 #endif
@@ -42,6 +48,38 @@ It will use one IO pin to show status and error.
 #include "cfg.h"
 
 
+enum
+{
+	SysMorseJ  = -14, //  .---
+	SysMorseP  = -13, // .--.
+	SysMorse12 = -12, //  .-.-
+	SysMorseL  = -11, // .-..
+	SysMorse10 = -10, //  ..--
+	SysMorseF  = -9,  // ..-.
+	SysMorseV  = -8,  // ...-
+	SysMorseH  = -7,  // ....
+	SysMorseW  = -6,  // .--
+	SysMorseR  = -5,  // .-.
+	SysMorseU  = -4,  // ..-
+	SysMorseS  = -3,  // ...
+	SysMorseA  = -2,  // .-
+	SysMorseI  = -1,  // ..
+	SysMorseE  = 0,   // .
+	SysMorseT  = 1,   // -
+	SysMorseN  = 2,   // -.
+	SysMorseM  = 3,   // --
+	SysMorseD  = 4,   // -..
+	SysMorseK  = 5,   // -.-
+	SysMorseG  = 6,   // --.
+	SysMorseO  = 7,   // ---
+	SysMorseB  = 8,   // -...
+	SysMorseX  = 9,   // -..-
+	SysMorseC  = 10,  // -.-.
+	SysMorseY  = 11,  // -.--
+	SysMorseZ  = 12,  // --..
+	SysMorseQ  = 13,  // --.-
+
+} SysMorseCodes;
 
 
 // More enums can be added here if needed.
@@ -94,7 +132,7 @@ void sysPinOutSetLow(GPIO_TypeDef* port, int pin); // For Green system LED this 
  * Application functions can call this to get the system tick counter.
  * It is supposed to be one tick per milli second.
  */
-int64_t sysGetSysTimeMs();
+int32_t sysGetSysTimeMs();
 
 /**
  * For very short delays the systemBusyWait can be used.
@@ -108,6 +146,7 @@ int64_t sysGetSysTimeMs();
 void sysBusyWait(uint32_t delay);
 void sysSleepMs(int32_t timeMs);
 void sysSleep();
+void sysWdtReset();
 
 /**
  * Device handlers or applications can call this if they encounter an
@@ -116,6 +155,7 @@ void sysSleep();
  * See enum SystemErrorCodes for error codes to use.
  */
 void sysErrorHandler(int errorCode);
+void sysLedFlashCode(int code);
 
 // This shall be first function called from main.
 // This is not same as systemInit which is called just before main is called.

@@ -35,10 +35,9 @@ Henrik Bjorkman
 
 
 int32_t secAndLogGetSeconds(void);
-void secAndLogIncSeconds(void);
 
 void secAndLogInit(void);
-void secAndLogMediumTick(void);
+void secAndLogMediumTick(int32_t mainTimeInTicks);
 
 #endif
 

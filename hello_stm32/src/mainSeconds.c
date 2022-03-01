@@ -35,11 +35,11 @@ Henrik Bjorkman
 
 
 
-int32_t secAndLogSeconds = 0;
-char superviceState = 0;
-int32_t superviceSeconds = 0;
+static int32_t secAndLogSeconds = 0;
+static char superviceState = 0;
+static int32_t superviceSeconds = 0;
 //static int16_t supervice_previous_ac_count=0;
-
+static int32_t mainSecondsTime_ms = 0;
 
 
 // Log frequency current and voltage at least this often.
@@ -69,6 +69,7 @@ void secAndLogIncSeconds(void)
 void secAndLogInit(void)
 {
 	logLine("mainSeconds: secAndLogInit");
+	mainSecondsTime_ms = sysGetSysTimeMs() + 1000;
 }
 
 
@@ -78,18 +79,18 @@ void secAndLogInit(void)
  * TODO Move counting of seconds from main_loop to here.
  * Here we put things that need to be done only once per second. 
  * This to spread the CPU load over time. */
-void secAndLogMediumTick(void)
+void secAndLogMediumTick(int32_t mainTimeInTicks)
 {
 	switch(superviceState)
 	{
 		case 0:
-		if (secAndLogSeconds!=superviceSeconds)
+		if (mainTimeInTicks>=mainSecondsTime_ms)
 		{
 			// Seconds has ticked.
 
 			SYS_LED_ON();
 
-			superviceSeconds=secAndLogSeconds;
+			mainSecondsTime_ms += 1000;
 
 			// Start a seconds tick sequence.
 			// Functions needing seconds tick will get it in the following few calls
@@ -143,11 +144,13 @@ void secAndLogMediumTick(void)
 			char tmp[64]="mainSeconds: ";
 			misc_lltoa(superviceSeconds, tmp+13, 10/*, sizeof(tmp)-13*/);
 			logLine(tmp);
+			++superviceSeconds;
 			superviceState++;
 			break;
 		}
 		default:
 		{
+            sysWdtReset();
 			superviceState=0;
 			SYS_LED_OFF();
 			break;

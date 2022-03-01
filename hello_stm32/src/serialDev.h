@@ -40,17 +40,14 @@ void serialPutChar(int usartNr, int ch);
 int serialGetChar(int usartNr);
 void serialWrite(int usartNr, const char *str, int msgLen);
 void serialPrint(int usartNr, const char *str);
-void serialPrintInt64(int usartNr, int64_t num);
+void serialPrintInt32(int usartNr, int32_t num);
 int serialGetFreeSpaceWriteBuffer(int usartNr);
 
 void serialPrintHex4(int usartNr, uint8_t num);
 void serialPrintHex8(int usartNr, uint8_t num);
 void serialPrintHex16(int usartNr, uint16_t num);
 void serialPrintHex32(int usartNr, uint32_t num);
-void serialPrintHex64(int usartNr, uint64_t num);
 
-
-
-#define logLine(str) {serialPrint(DEV_USART1, str); serialPrint(DEV_USART1, "\r\n"); serialPrint(DEV_USART2, str); serialPrint(DEV_USART2, "\r\n"); sysSleepMs(100);}
+#define logLine(str) {serialPrint(DEV_USART1, str); serialPrint(DEV_USART2, str); serialPrint(DEV_USART1, "\r\n"); serialPrint(DEV_USART2, "\r\n"); sysSleepMs(100);}
 
 #endif

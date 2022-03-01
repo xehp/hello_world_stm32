@@ -68,11 +68,12 @@ CFLAGS += -Werror -Wall -Wno-pointer-sign -Wno-error=cpp
 DEPENDENCIES = $(HEADER_FILES) 
 
 
+CFLAGS += $(INCPATH)
 
 
 # This will make the committed git version available to the compiler, if there are uncommitted changes .dirty is added also.
 GIT_VERSION := $(shell git describe --abbrev=8 --dirty --always --tags)
-CFLAGS += $(INCPATH) -DGIT_VERSION=\"$(GIT_VERSION)\"
+CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 
 
 all: info $(BINARY).hex $(BINARY).bin

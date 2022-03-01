@@ -33,30 +33,9 @@ TODO Rename this file to sysMain or something, since now there are also more gen
 
 #include "sys.h"
 
-// Some macros for backward compatibility with old HAL macros. These can be removed later.
-/*
-#ifndef TIM_EGR_BG_Msk
-#define TIM_EGR_BG_Msk TIM_EGR_BG
-#endif
-#ifndef RCC_AHBENR_GPIOAEN_Msk
-#define RCC_AHBENR_GPIOAEN_Msk RCC_AHBENR_GPIOAEN
-#endif
-#ifndef RCC_AHBENR_GPIOBEN_Msk
-#define RCC_AHBENR_GPIOBEN_Msk RCC_AHBENR_GPIOBEN
-#endif
-#ifndef RCC_AHBENR_GPIOCEN_Msk
-#define RCC_AHBENR_GPIOCEN_Msk RCC_AHBENR_GPIOCEN
-#endif
-#ifndef RCC_AHBENR_GPIODEN_Msk
-#define RCC_AHBENR_GPIODEN_Msk RCC_AHBENR_GPIODEN
-#endif
-#ifndef RCC_AHBENR_GPIOFEN_Msk
-#define RCC_AHBENR_GPIOFEN_Msk RCC_AHBENR_GPIOFEN
-#endif
-*/
 
-volatile int64_t SysTickCountMs = 0;
-volatile int32_t sysDummy = 0;
+volatile int32_t SysTickCountMs = 0;
+volatile uint32_t sysDummy = 0;
 
 // Simplest possible SysTick ISR (interrupt service routine).
 // TODO This "__attribute__ ((interrupt, used))" what does it do? 
@@ -75,32 +54,38 @@ void SysTick_Handler(void)
 #endif
 
 
-// Get the 64 bit timer counter value, be sure to not get a half updated value.
-int64_t sysGetSysTimeMs()
+// Get the 32 bit timer counter value, be sure to not get a half updated value.
+int32_t sysGetSysTimeMs()
 {
-	int64_t tmp1 = SysTickCountMs;
-	int64_t tmp2 = SysTickCountMs;
+	#if 0
+	int32_t tmp1 = SysTickCountMs;
+	int32_t tmp2 = SysTickCountMs;
 	while(tmp1 != tmp2)
 	{
 		tmp1 = SysTickCountMs;
 		tmp2 = SysTickCountMs;
 	}
 	return tmp1;
+	#else
+	return SysTickCountMs;
+	#endif
 }
 
 /**
 This can be used if a delay is needed before the SysTick is started.
 Once sys tick is running use systemSleepMs instead.
-Very roughly delay is measured in uS.
- */
+Use this only for short delays. Very roughly delay is measured in some uS.
+*/
 void sysBusyWait(uint32_t delay)
 {
-	while (delay > 0)
+	const uint32_t factor = 4000000;
+	sysDummy = delay * ((SysClockFrequencyHz+(factor-1))/factor);
+	while (sysDummy > 0)
 	{
-		sysDummy++; // Change a volatile, just to be sure the compiler does not optimize this out.
-		delay--;
+		sysDummy--;
 	}
 }
+
 
 // Setup the port/pin that is connected to the LED (Using the Green LED, it works).
 // It is assumed that the clock for the port is enabled already.
@@ -168,14 +153,17 @@ Set Interrupt Group Priority
 ref [1] does not say anything about SCB->AIRCR.
 It must be an ARM/Cortex thing and not an STM32 thing.
 http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0553a/Cihehdge.html
+https://developer.arm.com/documentation/dui0497/a/cortex-m0-peripherals/system-control-block/application-interrupt-and-reset-control-register
  */
 static void sysVectorInit()
 {
+#ifndef STM32F030x8
 	uint32_t tmp =  SCB->AIRCR;
 	const uint32_t VECTKEY = 0x5FAUL; // On writes, write 0x5FA to VECTKEY, otherwise the write is ignored.
 	tmp &= ~((uint32_t)((0xFFFFUL << SCB_AIRCR_VECTKEY_Pos) | (7UL << SCB_AIRCR_PRIGROUP_Pos)));
 	tmp |= ((uint32_t)VECTKEY << SCB_AIRCR_VECTKEY_Pos) |  (NVIC_PRIORITYGROUP_4 << SCB_AIRCR_PRIGROUP_Pos);
 	SCB->AIRCR =  tmp;
+#endif
 }
 
 
@@ -195,6 +183,7 @@ void sysSleep()
  */
 void sysSleepMs(int32_t timeMs)
 {
+    sysWdtReset();
 	const int32_t startTimeMs = sysGetSysTimeMs();
 	for(;;)
 	{
@@ -276,11 +265,15 @@ Negative numbers will have a short first to tell that its a negative number.
   14  ---.
   15  ----
  */
-static void flashCode(int code)
+void sysLedFlashCode(int code)
 {
-	const int beep = 200; // length of short beep in ms
+	const int beep = 100; // length of short beep in ms
 
-	sysSleepMs(beep);
+	#ifndef __arm__
+	printf(" ");
+	#endif
+
+	sysSleepMs(beep*2);
 
 	if (code>0)
 	{
@@ -309,6 +302,10 @@ static void flashCode(int code)
 		}
 	}
 	sysSleepMs(beep);
+
+	#ifndef __arm__
+	printf(" ");
+	#endif
 }
 
 /**
@@ -321,8 +318,8 @@ static void flashCode(int code)
 void sysErrorHandler(int errorCode)
 {
 	// Do not turn system timer off, systemFlashCode needs it.
-
 	// And/or make sure application calls its own error handler before this is called.
+
 	#if (defined STM32L432xx) || (defined STM32F303x8)
 		TIM1->EGR |= TIM_EGR_BG_Msk;
 		TIM2->EGR |= TIM_EGR_BG_Msk;
@@ -330,6 +327,10 @@ void sysErrorHandler(int errorCode)
 		TIM2->CR1=0;
         /* TODO Disable all interrupts, except system timer clock */
 		//RCC->CIR = 0x00000000;
+	#elif (defined STM32WB35xx)
+		// TODO, is there something we need to stop?
+	#elif (defined STM32F030x8)
+		// TODO, is there something we need to stop?
 	#else
 	#error Unknown target MCU
 	#endif
@@ -346,14 +347,14 @@ void sysErrorHandler(int errorCode)
 	// Eternal loop (needs system timer to be still running)
 	for(;;)
 	{
-		flashCode(errorCode);
+		sysLedFlashCode(errorCode);
 	}
 }
 
 
 // System Clock Config
 
-#if (defined STM32L432xx)
+#if (defined STM32L432xx) || (defined STM32WB35xx)
 
 
 static void sysPeripheralClockStart()
@@ -375,7 +376,7 @@ static void sysPeripheralClockStart()
 	sysBusyWait(10);
 }
 
-#elif (defined STM32F303x8) || (defined STM32L151xB)
+#elif (defined STM32F303x8) || (defined STM32L151xB) || (defined STM32F030x8)
 
 static void sysPeripheralClockStart()
 {
@@ -402,7 +403,6 @@ static void sysPeripheralClockStart()
 	//RCC->APB1ENR |= 0x76FEC837U;
 
 
-
 	// It seems to be good with a tiny delay here and there for clocks etc to start up.
 	sysBusyWait(10);
 }
@@ -411,7 +411,21 @@ static void sysPeripheralClockStart()
 #error not implemented yet
 #endif
 
+void sysWdtReset()
+{
+  IWDG->KR=0xAAAA;
+}
 
+
+static void sysWatchdogStart()
+{
+  // [7] Independent watchdog (IWDG)
+  IWDG->KR=0xCCCC;
+  IWDG->KR=0x5555;
+  IWDG->PR=0x7; // Use 0 - 7 (0 for very short, 7 will give 32 seconds or so)
+  while(IWDG->SR != 0) {;}
+  sysWdtReset();
+}
 
 
 // To be called from main, to do more setting up
@@ -423,9 +437,12 @@ void sysInit(void)
 
 	// Initialize the system debug LED
 	sysPinOutInit(SYS_LED_PORT, SYS_LED_PIN);
+	SYS_LED_ON();
 
 	sysVectorInit();
 
 	sysTickInit();
+
+    sysWatchdogStart();
 }
 

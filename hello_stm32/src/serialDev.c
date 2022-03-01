@@ -34,6 +34,10 @@ https://www.st.com/en/microcontrollers-microprocessors/stm32l151-152.html#docume
 #include "stm32l1xx_hal_gpio_ex.h"
 #elif (defined STM32F303x8)
 #include "stm32f3xx_hal_gpio_ex.h"
+#elif (defined STM32WB35xx)
+#include "stm32wbxx_hal_gpio_ex.h"
+#elif (defined STM32F030x8)
+#include "stm32f0xx_hal_gpio_ex.h"
 #else
 #error Unknown device
 #endif
@@ -45,39 +49,6 @@ https://www.st.com/en/microcontrollers-microprocessors/stm32l151-152.html#docume
 #include "serialDev.h"
 
 
-// Macros for compatibility with older versions of HAL, these can be removed later some day.
-/*
-#ifndef USART_ISR_RXNE_Msk
-#define USART_ISR_RXNE_Msk USART_ISR_RXNE
-#endif
-#ifndef USART_ISR_TXE_Msk
-#define USART_ISR_TXE_Msk USART_ISR_TXE
-#endif
-#ifndef USART_CR1_TXEIE_Msk
-#define USART_CR1_TXEIE_Msk USART_CR1_TXEIE
-#endif
-#ifndef USART_CR1_UE_Msk
-#define USART_CR1_UE_Msk USART_CR1_UE
-#endif
-#ifndef RCC_APB2ENR_USART1EN_Msk
-#define RCC_APB2ENR_USART1EN_Msk RCC_APB2ENR_USART1EN
-#endif
-#ifndef RCC_APB1ENR_USART2EN_Msk
-#define RCC_APB1ENR_USART2EN_Msk RCC_APB1ENR_USART2EN
-#endif
-#ifndef USART_CR1_TE_Msk
-#define USART_CR1_TE_Msk USART_CR1_TE
-#endif
-#ifndef USART_CR2_CLKEN_Msk
-#define USART_CR2_CLKEN_Msk USART_CR2_CLKEN
-#endif
-#ifndef USART_CR1_RE_Msk
-#define USART_CR1_RE_Msk USART_CR1_RE
-#endif
-#ifndef USART_CR1_RXNEIE_Msk
-#define USART_CR1_RXNEIE_Msk USART_CR1_RXNEIE
-#endif
-*/
 
 
 #ifdef LPUART1_BAUDRATE
@@ -107,20 +78,19 @@ volatile struct Fifo usart1Out = {0,0,{0}};
 #ifdef USART2_BAUDRATE
 
 	// Do we support sending on Usart2. Comment this out if not needed.
-    // Typical transmit pin is PA2, but PD5 may be possible to use on some devices.
-    // USART2_TX_PIN can be set to 2 or 5 here for PA2 or PD5 respectively.
+	// Typical transmit pin is PA2, but PD5 may be possible to use on some devices.
+	// USART2_TX_PIN can be set to 2 or 5 here for PA2 or PD5 respectively.
 	#define USART2_TX_PIN 2
 
 	// On which pin shall Usart2 transmit, use 3 or 15.
 	// On Nucleo PA3 does not work via stlink (PA2 does work for sending), use PA_15 for usart2 RX instead.
 	// https://community.st.com/s/question/0D50X00009XkYKK/usart-vcp-connections-on-nucleol432kc
-    // USART2_RX_PIN can be set to 3, 15 or 6 here for PA3, PA15 or PD6 respectively.
+	// USART2_RX_PIN can be set to 3, 15 or 6 here for PA3, PA15 or PD6 respectively.
 	#if (defined STM32L432xx)
 	#define USART2_RX_PIN 15
 	#else
 	#define USART2_RX_PIN 3
 	#endif
-
 
 	#ifdef USART2_RX_PIN
 	volatile struct Fifo usart2In = {0,0,{0}};
@@ -270,7 +240,7 @@ volatile struct Fifo usart1Out = {0,0,{0}};
 
 	void __attribute__ ((interrupt, used)) USART1_IRQHandler(void)
 	{
-	  volatile uint32_t tmp = USART1->SR;
+	  const uint32_t tmp = USART1->SR;
 
 	  // RXNE (Receive not empty)
 	  if (tmp & USART_SR_RXNE_Msk)
@@ -298,7 +268,7 @@ volatile struct Fifo usart1Out = {0,0,{0}};
 	#ifdef USART2_BAUDRATE
 	void __attribute__ ((interrupt, used)) USART2_IRQHandler(void)
 	{
-	  volatile uint32_t tmp = USART2->SR;
+	  const uint32_t tmp = USART2->SR;
 
 	  #ifdef USART2_RX_PIN
 	  // RXNE (Receive not empty)
@@ -356,7 +326,78 @@ volatile struct Fifo usart1Out = {0,0,{0}};
 	}
 	#endif
 
+#elif (defined STM32F030x8)
+	#ifdef USART1_BAUDRATE
+	void __attribute__ ((interrupt, used)) USART1_IRQHandler(void)
+	{
+	  volatile uint32_t tmp = USART1->ISR;
 
+	  // RXNE (Receive not empty)
+	  if (tmp & USART_ISR_RXNE_Msk)
+	  {
+		fifoPut(&usart1In, USART1->RDR);
+	  }
+
+	  // TXE (transmit empty)
+	  if (tmp & USART_ISR_TXE_Msk)
+	  {
+		if (!fifoIsEmpty(&usart1Out))
+		{
+		  USART1->TDR = fifoTake(&usart1Out);
+		}
+		else
+		{
+		  // We are done sending, disables further tx empty interrupts.
+		  USART1->CR1 &= ~(USART_CR1_TXEIE_Msk);
+		}
+	  }
+	}
+	#endif
+
+	#ifdef USART2_BAUDRATE
+	void __attribute__ ((interrupt, used)) USART2_IRQHandler(void)
+	{
+		//SYS_LED_ON();
+
+		volatile uint32_t tmp = USART2->ISR;
+
+		#ifdef USART2_RX_PIN
+		// RXNE (Receive not empty)
+		if (tmp & USART_ISR_RXNE_Msk)
+		{
+			fifoPut(&usart2In, (int)(USART2->RDR & 0xFF));
+		}
+		#endif
+
+		#ifdef USART2_TX_PIN
+		// TXE (transmit empty)
+		if (tmp & USART_ISR_TXE_Msk)
+		{
+			if (!fifoIsEmpty(&usart2Out))
+			{
+				USART2->TDR = fifoTake(&usart2Out);
+			}
+			else
+			{
+				// We are done sending, disables further tx empty interrupts.
+				USART2->CR1 &= ~(USART_CR1_TXEIE_Msk);
+
+				// This was just for testing, remove later...
+				//USART2->CR1 |= (USART_CR1_RXNEIE_Msk);
+			}
+		}
+		#endif
+
+		//SYS_LED_OFF();
+
+		// This line is probably not needed.
+		USART2->ICR = 0x2A5F;
+
+	}
+	#endif
+
+#else
+#error
 #endif
 
 /* This seems to work fine, we do get what the Nucleo sends */
@@ -504,18 +545,20 @@ void setupIoPinRx(GPIO_TypeDef *base, uint32_t pin, uint32_t alternateFunction)
 
 USART_TypeDef *usartGetPtr(int usartNr)
 {
-  switch(usartNr)
-  {
-    case DEV_USART1: return USART1;
-    case DEV_USART2: return USART2;
-	#ifdef USART3_BAUDRATE
-    case DEV_USART3: return USART3;
-	#endif
-    default :
-		sysErrorHandler(SYS_UNKNOWN_UART_ERROR);
-    	break;
-  }
-  return NULL;
+    switch(usartNr)
+    {
+        case DEV_USART1: return USART1;
+        #ifdef USART2_BAUDRATE
+        case DEV_USART2: return USART2;
+        #endif
+        #ifdef USART3_BAUDRATE
+        case DEV_USART3: return USART3;
+        #endif
+        default :
+            sysErrorHandler(SYS_UNKNOWN_UART_ERROR);
+            break;
+	}
+	return NULL;
 }
 
 int usartGetIrqN(int usartNr)
@@ -526,7 +569,9 @@ int usartGetIrqN(int usartNr)
 		case DEV_LPUART1: return LPUART1_IRQn;
 		#endif
 		case DEV_USART1: return USART1_IRQn;
+		#ifdef USART2_BAUDRATE
 		case DEV_USART2: return USART2_IRQn;
+		#endif
 		#ifdef USART3_BAUDRATE
 		case DEV_USART3: return USART3_IRQn;
 		#endif
@@ -672,7 +717,144 @@ int lpuartInit(uint32_t baud)
 }
 #endif
 
+#ifdef USART1_BAUDRATE
+static void setup_fifo_and_io_pins_usart1()
+{
+	fifoInit(&usart1In);
+	fifoInit(&usart1Out);
+
+	// If higher baud rate is needed change clock source.
+	// Select clock LPUART1SEL
+	/*{
+	 uint32_t tmp = RCC->CCIPR;
+	 tmp &= ~(3 << 0);
+	 tmp |= ~(1 << 0);
+	 RCC->CCIPR = tmp;
+	 }*/
+	//RCC->APB2RSTR |= RCC_APB2RSTR_USART1RST_Msk; // [RM0434] Bit 14 USART1RST: USART1 reset
+
+
+	// Enable Usart1 device
+	//#if (defined STM32L432xx)
+	//RCC->APB2ENR1 |= RCC_APB2ENR1_USART1EN_Msk;
+	//#elif (defined STM32L151xB) || (defined STM32F303x8) || (defined STM32F030x8)
+	RCC->APB2ENR |= RCC_APB2ENR_USART1EN_Msk;
+	//#else
+	//#error Unknown device
+	//#endif
+
+
+	// Configure IO pins.
+	#if (defined STM32F030x8)
+	setupIoPinTx(GPIOA, 9, GPIO_AF1_USART1);
+	setupIoPinRx(GPIOA, 10, GPIO_AF1_USART1);
+	#elif 1
+	// Using PA9/AF7 & PA10/AF7
+	setupIoPinTx(GPIOA, 9, GPIO_AF7_USART1);
+	setupIoPinRx(GPIOA, 10, GPIO_AF7_USART1);
+	#else
+	// See Ref [2] table 16 or Ref [5] table 10
+	// If PA9 & PA10 are needed by something else try these instead:
+	// Using PB6/AF7 & PB7/AF7
+	setupIoPinTx(GPIOB, 6, GPIO_AF7_USART1);
+	setupIoPinRx(GPIOB, 7, GPIO_AF7_USART1);
+	#endif
+
+}
+#endif
+
+#ifdef USART2_BAUDRATE
+static void setup_fifo_and_io_pins_usart2()
+{
+	// Init FIFOs
+	#ifdef USART2_RX_PIN
+	fifoInit(&usart2In);
+	#else
+	#error
+	#endif
+	#ifdef USART2_TX_PIN
+	fifoInit(&usart2Out);
+	#else
+	#error
+	#endif
+
+	// Enable Usart2 device
+	#if (defined STM32L432xx)
+	RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN_Msk;  // bit 17
+	#elif (defined STM32L151xB) || (defined STM32F303x8) || (defined STM32F030x8)
+	RCC->APB1ENR |= RCC_APB1ENR_USART2EN_Msk;
+	#else
+	#error Unknown device
+	#endif
+
+	// Setup transmit pin
+	#ifdef USART2_TX_PIN
+		#if USART2_TX_PIN == 2
+			#if (defined STM32F030x8)
+			setupIoPinTx(GPIOA, 2, GPIO_AF1_USART2);
+			#else
+			setupIoPinTx(GPIOA, 2, GPIO_AF7_USART2);
+			#endif
+		#elif (USART2_TX_PIN == 5) && (defined STM32L432xx)
+		// Configure IO pins, to find pins and alternate function codes for STM32L432xx see table 16 in ref [2].
+		// For STM32L151xB see table 10 in ref [5] to find which alternate function to use.
+		setupIoPinTx(GPIOD, 5, GPIO_AF7_USART2);
+		#else
+		#error
+		#endif
+	#endif
+
+	// Setup receive pin
+	#ifdef USART2_RX_PIN
+		#if USART2_RX_PIN == 3
+			#if (defined STM32F0)
+			// Want Usart2 RX on PA3 so its AF1
+			setupIoPinRx(GPIOA, 3, GPIO_AF1_USART2);
+			#else
+			// Want Usart2 RX on PA3 so its AF7, ref [2] & [5] give same.
+			setupIoPinRx(GPIOA, 3, GPIO_AF7_USART2);
+			#endif
+		#elif (USART2_RX_PIN == 6) && (defined STM32L432xx)
+		// Want Usart2 RX on PD6 so its AF7
+		setupIoPinRx(GPIOD, 3, GPIO_AF7_USART2);
+		#elif (USART2_RX_PIN == 15) && (defined STM32L432xx)
+		// Receive pin (normally it would be PA3 AF7, see ref [2].
+		// But on Nucleo its not available so we need to use PA15 AF3.
+		// Want Usart2 RX on PA15 so its AF3 (not AF7), see ref [2]. Not possible on STM32L151xB.
+		setupIoPinRx(GPIOA, 15, GPIO_AF3_USART2);
+		#else
+		#error
+		#endif
+	#endif
+}
+#endif
+
+#ifdef USART3_BAUDRATE
+static void setup_fifo_and_io_pins_usart3()
+{
+	fifoInit(&usart3In);
+	fifoInit(&usart3Out);
+
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN_Msk;
+
+	// For STM32L151xB see table 10 in ref [5].
+	// Want Usart3 on TX=PB10 RX=PB11, so its AF7 for both.
+	// It is also possible to use PC4, PC5, PC10, PC11 (all AF7) on some devices.
+	// See table 16 in ref [2].
+
+	// Transmit pin PB10/AF7
+	setupIoPinTx(GPIOB, 10, GPIO_AF7_USART2);
+
+	// Receive pin PB11/AF7
+	setupIoPinRx(GPIOB, 11, GPIO_AF7_USART2);
+}
+#endif
+
+
 #if (defined USART1_BAUDRATE) || (defined USART2_BAUDRATE) || (defined USART3_BAUDRATE)
+
+
+
 /**
 This sets up the Usart 1 or 2. 
 
@@ -689,107 +871,36 @@ static int initUsart123(int usartNr, uint32_t baud)
 		return -1;
 	}
 
+	// Enable needed clocks
+	// These lines should not be needed here.
+	// TODO Investigate if there is a better place.
+	#if (defined STM32L432xx)
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN_Msk;
+	#else
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN_Msk;
+	#endif
+
 	/* Disable the Peripheral, should be the reset state but just in case. */
-	usartPtr->CR1 &= ~USART_CR1_UE_Msk;
+	//usartPtr->CR1 &= ~USART_CR1_UE_Msk;
+	usartPtr->CR1 = 0;
 
 	// Clear the in and out FIFOs
 	// Enable Usart clock
 	switch (usartNr)
 	{
-		#if (defined USART1_BAUDRATE)
+		#ifdef USART1_BAUDRATE
 		case DEV_USART1:
-			// If higher baud rate is needed change clock source.
-			// Select clock LPUART1SEL
-			/*{
-			 uint32_t tmp = RCC->CCIPR;
-			 tmp &= ~(3 << 0);
-			 tmp |= ~(1 << 0);
-			 RCC->CCIPR = tmp;
-			 }*/
-			fifoInit(&usart1In);
-			fifoInit(&usart1Out);
-			RCC->APB2ENR |= RCC_APB2ENR_USART1EN_Msk;
-
-			// Configure IO pins.
-			#if 1
-			// Using PA9/AF7 & PA10/AF7
-			setupIoPinTx(GPIOA, 9, GPIO_AF7_USART1);
-			setupIoPinRx(GPIOA, 10, GPIO_AF7_USART1);
-			#else
-			// See Ref [2] table 16 or Ref [5] table 10
-			// If PA9 & PA10 are needed by something else try these instead:
-			// Using PB6/AF7 & PB7/AF7
-			setupIoPinTx(GPIOB, 6, GPIO_AF7_USART1);
-			setupIoPinRx(GPIOB, 7, GPIO_AF7_USART1);
-			#endif
-
+			setup_fifo_and_io_pins_usart1();
 			break;
 		#endif
 		#ifdef USART2_BAUDRATE
 		case DEV_USART2:
-			#ifdef USART2_RX_PIN
-			fifoInit(&usart2In);
-			#endif
-
-			#ifdef USART2_TX_PIN
-			fifoInit(&usart2Out);
-			#endif
-
-			#if (defined STM32L432xx)
-			RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN_Msk;  // bit 17
-			#elif (defined STM32L151xB) || (defined STM32F303x8)
-			RCC->APB1ENR |= RCC_APB1ENR_USART2EN_Msk;
-			#else
-			#error Unknown device
-			#endif
-
-			// Configure IO pins, to find pins and alternate function codes for STM32L432xx see table 16 in ref [2].
-			// For STM32L151xB see table 10 in ref [5] to find which alternate function to use.
-
-			// Transmit pin
-			#if USART2_TX_PIN == 2
-			setupIoPinTx(GPIOA, 2, GPIO_AF7_USART2);
-			#elif (USART2_TX_PIN == 5) && (defined STM32L432xx)
-			setupIoPinTx(GPIOD, 5, GPIO_AF7_USART2);
-			#else
-			#error
-			#endif
-
-			// Receive pin (normally it would be PA3 AF7, see ref [2].
-			// But on Nucleo its not available so we need to use PA15 AF3.
-			#if USART2_RX_PIN == 3
-			// Want Usart2 RX on PA3 so its AF7, ref [2] & [5] give same.
-			setupIoPinRx(GPIOA, 3, GPIO_AF7_USART2);
-			#elif (USART2_RX_PIN == 6) && (defined STM32L432xx)
-			// Want Usart2 RX on PD6 so its AF7
-			setupIoPinRx(GPIOD, 3, GPIO_AF7_USART2);
-			#elif (USART2_RX_PIN == 15) && (defined STM32L432xx)
-			// Want Usart2 RX on PA15 so its AF3 (not AF7), see ref [2]. Not possible on STM32L151xB.
-			setupIoPinRx(GPIOA, 15, GPIO_AF3_USART2);
-			#else
-			#error
-			#endif
-
+			setup_fifo_and_io_pins_usart2();
 			break;
 		#endif
 		#ifdef USART3_BAUDRATE
 		case DEV_USART3:
-			fifoInit(&usart3In);
-			fifoInit(&usart3Out);
-
-			RCC->APB1ENR |= RCC_APB1ENR_USART3EN_Msk;
-
-			// For STM32L151xB see table 10 in ref [5].
-			// Want Usart3 on TX=PB10 RX=PB11, so its AF7 for both.
-			// It is also possible to use PC4, PC5, PC10, PC11 (all AF7) on some devices.
-			// See table 16 in ref [2].
-
-			// Transmit pin PB10/AF7
-			setupIoPinTx(GPIOB, 10, GPIO_AF7_USART2);
-
-			// Receive pin PB11/AF7
-			setupIoPinRx(GPIOB, 11, GPIO_AF7_USART2);
-
+			setup_fifo_and_io_pins_usart3();
 			break;
 		#endif
 		default:
@@ -843,9 +954,11 @@ static int initUsart123(int usartNr, uint32_t baud)
 	 */
 	//USART2->CR2 &= ~(USART_CR2_LINEN_Msk | USART_CR2_CLKEN_Msk);
 	//USART2->CR3 &= ~(USART_CR3_SCEN_Msk | USART_CR3_HDSEL_Msk | USART_CR3_IREN_Msk);
+	#ifndef STM32F030x8
 	usartPtr->CR2 &= ~(USART_CR2_CLKEN_Msk);
+	#endif
 
-	sysBusyWait(1);
+	sysBusyWait(2);
 
 	//Set Usart1 interrupt priority. Lower number is higher priority.
 	//uint32_t prioritygroup = NVIC_GetPriorityGrouping();
@@ -853,13 +966,17 @@ static int initUsart123(int usartNr, uint32_t baud)
 	const int irqN = usartGetIrqN(usartNr);
 	NVIC_SetPriority(irqN, (1UL << __NVIC_PRIO_BITS) - 1UL);
 
-	// This one helped.
-	// https://community.st.com/thread/19735
-	// I was missing to do NVIC_EnableIRQ.
-	NVIC_EnableIRQ(irqN);
+
 
 	/* Enable the Peripheral */
 	usartPtr->CR1 |= USART_CR1_UE_Msk;
+
+	//sysLedFlashCode(SysMorseD);
+
+	// Enable device specific interrupt
+	NVIC_EnableIRQ(irqN);
+
+	//sysLedFlashCode(SysMorseE);
 
 	/*
 	 Shall interrupt be enabled before or after usart is enabled?
@@ -869,6 +986,8 @@ static int initUsart123(int usartNr, uint32_t baud)
 	 1: A USART interrupt is generated whenever ORE=1 or RXNE=1 in the USART_ISR
 	 */
 	usartPtr->CR1 |= USART_CR1_RXNEIE_Msk;
+
+	sysSleepMs(2);
 
 	return 0;
 }
@@ -929,9 +1048,14 @@ static inline void usart2Put(int ch)
 	//	systemSleep();
 	//}
 
+#if 1
 	fifoPut(&usart2Out, ch);
 	// Now we need to trigger the ISR. Its done by enabling transmitter empty interrupt (it is empty so).
 	USART2->CR1 |= USART_CR1_TXEIE_Msk;
+#else
+	USART2->TDR = ch;
+	sysSleepMs(1);
+#endif
 }
 #endif
 
@@ -962,14 +1086,16 @@ void serialPutChar(int usartNr, int ch)
 			lpuart1Put(ch);
 			break;
 		#endif
-		#if (defined USART1_BAUDRATE)
+		#ifdef USART1_BAUDRATE
 		case DEV_USART1:
 			usart1Put(ch);
 			break;
 		#endif
 		#ifdef USART2_BAUDRATE
 		case DEV_USART2:
+			#ifdef USART2_TX_PIN
 			usart2Put(ch);
+			#endif
 			break;
 		#endif
 		#ifdef USART3_BAUDRATE
@@ -1050,11 +1176,13 @@ static inline void usartWriteUart1(const char *str, int msgLen)
 #ifdef USART2_BAUDRATE
 static inline void usartWriteUart2(const char *str, int msgLen)
 {
+	#ifdef USART2_TX_PIN
 	while (msgLen>0)
 	{
 		usart2Put(*str++);
 	    msgLen--;
 	}
+	#endif
 }
 #endif
 
@@ -1115,7 +1243,7 @@ void serialPrint(int usartNr, const char *str)
 	}
 }
 
-void serialPrintInt64(int usartNr, int64_t num)
+void serialPrintInt32(int usartNr, int32_t num)
 {
 	char str[64];
 	misc_lltoa(num, str, 10);
@@ -1176,9 +1304,4 @@ void serialPrintHex32(int usartNr, uint32_t i)
 	serialPrintHex16(usartNr, i&0xffff);
 }
 
-void serialPrintHex64(int usartNr, uint64_t i)
-{
-	serialPrintHex32(usartNr, i>>32);
-	serialPrintHex32(usartNr, i&0xffffffff);
-}
 

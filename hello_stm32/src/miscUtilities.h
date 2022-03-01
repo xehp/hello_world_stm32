@@ -24,9 +24,9 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
 /* A utility function to reverse a string  */
-void misc_reverse(char str[], int length);
+//void misc_reverse(char str[], int length);
 
-char* misc_lltoa(int64_t num, char* str, int base);
+char* misc_lltoa(int32_t num, char* str, int base);
 
 int utility_memcmp(const int8_t* ptr1, const int8_t* ptr2, int n);
 void utility_memcpy(uint8_t *dst, const uint8_t *src, int n);
@@ -38,9 +38,9 @@ int utility_strccpy(uint8_t *dst, const uint8_t *src, int n);
 int utility_isgraph(int ch);
 int utility_isprint(int ch);
 
-int utility_lltoa(int64_t num, char* bufptr, int base, int buflen);
+int utility_lltoa(int32_t num, char* bufptr, int base, int buflen);
 
-int64_t utility_atoll(const char* str);
+int32_t utility_atoll(const char* str);
 
 #endif
 

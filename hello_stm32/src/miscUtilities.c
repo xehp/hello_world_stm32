@@ -21,9 +21,11 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "miscUtilities.h"
 
 
+static const int hex[]={'0','1','2','3','4','5','6','7', '8','9','A','B','C','D','E','F'};
+
 
 /* A utility function to reverse a string  */
-void misc_reverse(char str[], int length)
+static void misc_reverse(char str[], int length)
 {
     int start = 0;
     int end = length -1;
@@ -39,10 +41,10 @@ void misc_reverse(char str[], int length)
     }
 }
 
-
-char* misc_lltoa(int64_t num, char* str, int base)
+// base must be 1 thrue 16
+char* misc_lltoa(int32_t num, char* str, int base)
 {
-	int64_t i = 0;
+	int i = 0;
 	char isNegative = 0;
 
 	/* Handle 0 explicitly, otherwise empty string is printed for 0 */
@@ -64,14 +66,17 @@ char* misc_lltoa(int64_t num, char* str, int base)
 	// Process individual digits
 	while (num != 0)
 	{
-		int64_t rem = num % base;
-		str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
-		num = num/base;
+		const int r = num % base;
+		str[i] = hex[r & 0xf];
+		++i;
+		num = num / base;
 	}
 
 	// If number is negative, append '-'
 	if (isNegative)
-	str[i++] = '-';
+	{
+	    str[i++] = '-';
+	}
 
 	str[i] = '\0'; // Append string terminator
 
@@ -172,9 +177,9 @@ static void utility_reverse(char str[], int length)
 
 // Returns number of characters written (not the pointer to src)
 // NOTE! buffer must be large enough! 32 bytes should do, not less.
-int utility_lltoa(int64_t num, char* bufptr, int base, int buflen)
+int utility_lltoa(int32_t num, char* bufptr, int base, int buflen)
 {
-    int64_t i = 0;
+    int32_t i = 0;
     char isNegative = 0;
 
     SYS_ASSERT(buflen>=32);
@@ -198,7 +203,7 @@ int utility_lltoa(int64_t num, char* bufptr, int base, int buflen)
     // Process individual digits
     while (num != 0)
     {
-        int64_t rem = num % base;
+        int32_t rem = num % base;
         bufptr[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
         num = num/base;
     }
@@ -217,9 +222,9 @@ int utility_lltoa(int64_t num, char* bufptr, int base, int buflen)
 
 
 
-int64_t utility_atoll(const char* str)
+int32_t utility_atoll(const char* str)
 {
-    int64_t value = 0;
+    int32_t value = 0;
 
     while (*str == ' ')
     {
@@ -245,3 +250,4 @@ int64_t utility_atoll(const char* str)
     return value;
 }
 #endif
+

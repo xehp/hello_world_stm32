@@ -20,7 +20,7 @@
 
 
 
-BINARY ?= binary
+BINARY ?= hello_stm
 ST_FLASH ?= st-flash
 GCC_TOOLCHAIN ?= arm-none-eabi-
 

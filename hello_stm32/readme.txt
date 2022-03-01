@@ -6,7 +6,7 @@ from HAL (those are good). Those header files are OK to distribute like this
 as far as I can understand.
 
 In each of the folders STM32F3, STM32L4 etc there is a "readme.txt" file
-explaing how to adapt the code for other devices than the one tested (by us).
+explaining how to adapt the code for other devices than the one tested (by us).
 
 A cross compiler will be needed. If not already installed just do:
 sudo apt install gcc-arm-none-eabi
@@ -18,11 +18,32 @@ make
 
 NOTE if changing device/MCU do a make clean between since files may get mixed up.
 
+
+Programming devices
+
+Nucleo
+
 If using Nucleo the device will show up as an USB flash drive when connected.
 Just copy and paste the "binary.bin" that is generated file over to that drive. 
 
 If all goes well it (the file) shall appear and then disappear after about 5 seconds.
 If not try refresh and/or reboot the device.
+
+ST-link
+
+Before programming the chip pull BOOT0 high. 
+Move jumper on J20 to connect pins 3 & 1, (the position closer to LDO).
+
+
+cd stm32l151xb
+
+make && st-flash --connect-under-reset --format ihex write build/hello_usb.hex
+
+If all goes well it shall say: "Flash written and verified!".
+
+After programming move BOOT0 jumper back to low, connect 3 & 5 (run position).
+	
+
 
 
 
